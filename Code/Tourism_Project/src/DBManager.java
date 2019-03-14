@@ -19,6 +19,8 @@ import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.general.PieDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.ApplicationFrame;
 
 public class DBManager {
@@ -36,16 +38,20 @@ public class DBManager {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public char mainMenu() throws SQLException {
-		
-		
+
+
 		while(true) {
-			
+
 			System.out.println("Was wollen Sie tun?");
-			System.out.println("a ... ein Jahr auswählen und den Ort mit dem meisten Tourismus auswählen");
+			System.out.println("a ... ein Jahr auswählen und den Ort mit dem meisten Wintertourismus erhalten");
+			System.out.println("h ... die fünf Orte mit dem höchsten Tourismus erhalten");
+			System.out.println("g ... die fünf Orte mit dem höchsten Tourismus als PieChart erhalten");
 			System.out.println("s ... Den Verlauf des Wintertourismus in Innsbruck ausgeben");
-			System.out.println("h ... die fünf Orte mit dem höchsten Tourismus");
+			System.out.println("l ... Hier können sie den Verlauf des Wintertourismus pro Ort ansehen");
+			
+			
 			String answer = sc.next();
 			switch(answer) {
 			case "a": 
@@ -57,258 +63,336 @@ public class DBManager {
 			case "h": 
 				fivePlacesWithTheHighestTourism();
 				break; 
+			case "g": 
+				createChart5Places(createDataset5Places());
+				break; 
+			case "l": 
+				menuPlace();
+				break; 
 			default:
 				System.out.println("Bitte geben Sie einen anderen Buchstaben ein");
 				break;
 			}
 		}
-		
+
 	}
 
 	public String menuYear() throws SQLException {
-	
+
 		String choice = null;
-		
+
 		System.out.println("Falls Sie kein Jahr angeben, "
 				+ "wird der Ort mit dem meisten Tourismus im Jahr 2000 angegeben");
 		System.out.println("Wollen Sie ein Jahr angeben?: [j/n] "
 				+ "oder das Menü verlassen?: [q]");
-		
+
 		do {
 			choice = sc.nextLine();
-		switch (choice) {
-		case "j":
-			System.out.println("Bitte ein Jahr eingeben, wo sie den Ort mit dem meisten Tourismus haben wollen");
-			System.out.println("Jahr: ");
-			int year = getInputYear();
-			getPlaceWithMostTourismInACertainYear(year);			
-			break;
-		case "n":
-			System.out.println("Der Ort mit dem meisten Tourismus im Jahr 2000: ");
-			getPlaceWithMostTourismInFirstYear();
-			break;
-	}
-	}while(!choice.equals("q"));
-		
+			switch (choice) {
+			case "j":
+				System.out.println("Bitte ein Jahr eingeben, wo sie den Ort mit dem meisten Tourismus haben wollen");
+				System.out.println("Jahr: ");
+				int year = getInputYear();
+				getPlaceWithMostTourismInACertainYear(year);			
+				break;
+			case "n":
+				System.out.println("Der Ort mit dem meisten Tourismus im Jahr 2000: ");
+				getPlaceWithMostTourismInFirstYear();
+				break;
+			}
+		}while(!choice.equals("q"));
+
 		return menuYear();
-		
+
 	}
+
 	
-	
+	public String menuPlace() throws SQLException {
+
+		String choice = null;
+
+		System.out.println("Falls Sie keinen Ort angeben, wird der Verlauf für Innsbruck gezeigt");
+		System.out.println("Wollen Sie einen Ort angeben?: [j/n] "
+				+ "oder das Menü verlassen?: [q]");
+
+		do {
+			choice = sc.nextLine();
+			switch (choice) {
+			case "j":
+				System.out.println("Bitte den Ort für den Verlauf angeben:");
+				System.out.println("Ort: ");
+				String place = getInputPlace();
+				showProgressOfTourismOfCertainPlace(place);			
+				break;
+			case "n":
+				System.out.println("Der Verlauf von Innsbruck: ");
+				showProgressOfTourism();
+				break;
+			}
+		}while(!choice.equals("q"));
+
+		return menuYear();
+
+	}
+
+
 	public int getInputYear() {
 		int year = sc.nextInt(); 
-		
+
 		return year;
-		
+
 	}
-	
-	
-	
-	public String getPlaceWithMostTourismInACertainYear(int year) throws SQLException {
+
+	public String getInputPlace() {
+		String place = sc.toString();
 		
+		return place;
+	}
+
+
+	public String getPlaceWithMostTourismInACertainYear(int year) throws SQLException {
+
 		PreparedStatement stm = null;
 		ResultSet rs = null;
 		String maxMunicipality = null;
-		
-		String sql = "SELECT municipality FROM tourism WHERE ? = (SELECT MAX(?) FROM tourism)";
-		
+
+		String sql = "SELECT Gemeinde FROM winterTourism ORDER BY `2000` DESC LIMIT 1;";
+
 
 		try {
-			
+
 			stm = c.prepareStatement(sql);
-			stm.setInt(1, year);
-			stm.setInt(2, year);
 			rs = stm.executeQuery();
-			
+
 
 			while(rs.next()) {
-				maxMunicipality = rs.getString(1);
+				maxMunicipality = rs.getString("Gemeinde");
 				System.out.println(maxMunicipality);	
 			}		
-			
-			}catch (SQLException e) {
-				e.printStackTrace();
+
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
+		finally {
+			if (stm != null) {
+				stm.close();
 			}
-			finally {
-				if (stm != null) {
-					stm.close();
-				}
-			}
-			
+		}
+
 		return maxMunicipality;
-			
-		
+
+
 	}
 	public String getPlaceWithMostTourismInFirstYear() throws SQLException {
-		
+
 		PreparedStatement stm = null;
 		ResultSet rs = null;
 		String maxMunicipality = null;
-		
-		String sql = "SELECT municipality FROM tourism WHERE firstYear = (SELECT MAX(firstYear) FROM tourism)";
-	
-		
+
+		String sql = "SELECT Gemeinde FROM winterTourism WHERE `2000` = (SELECT MAX(2000) FROM winterTourism)";
+
+
 		try {
 			stm = c.prepareStatement(sql);
 			rs = stm.executeQuery(sql);
 			while(rs.next()) {
-				
+
 				maxMunicipality = rs.getString("municipality");
 				System.out.println(maxMunicipality);	
 			}		
-		
-			}catch (SQLException e) {
-				e.printStackTrace();
-			}
-			finally {
-				if (stm != null) {
-					stm.close();
-				}
-				if (c != null) {
-					c.close();
-				}
-			}
 
-			return maxMunicipality;
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
+		finally {
+			if (stm != null) {
+				stm.close();
+			}
+			if (c != null) {
+				c.close();
+			}
+		}
+
+		return maxMunicipality;
 	}
 
 
 	public static List<Municipality> fivePlacesWithTheHighestTourism() throws SQLException{
 		PreparedStatement stm = null;
 		ResultSet rs = null;
-	
-		String sql = "SELECT municipality, firstYear FROM tourism ORDER BY firstYear DESC LIMIT 5";
+
+		String sql = "SELECT Gemeinde, `2000` FROM winterTourism ORDER BY `2000` DESC LIMIT 5";
 		ArrayList<Municipality> list = new ArrayList<Municipality>();
 
 		try {
-		
+
 			stm = c.prepareStatement(sql);
 			rs = stm.executeQuery(sql);
-			
+
 			while (rs.next()) {
 				list.add(new Municipality(rs.getString(1), rs.getInt(2)));
-				//System.out.println(rs.getString(1)+ " " + rs.getInt(2));	
+
 			}
-			
+
 			for(Municipality m : list) {
 				System.out.println(m.getMunicipality() + " " + m.getYearOne());
 			}
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
 			if (stm != null) {
 				stm.close();
 			}
-		
+
 		}
 		return list;
 	}
-	
-	
-	 private static PieDataset createDataset5Places( ) throws SQLException {
-		 String[][] array = new String[5][5];
-		 List<Municipality> list = null;
-		 
-		 for (Municipality element : fivePlacesWithTheHighestTourism()) {
-			 
-		 }
-	      DefaultPieDataset dataset = new DefaultPieDataset( );
-	     
-	      dataset.setValue( "IPhone" , new Double( 20 ) );  
-	      dataset.setValue( "SamSung Grand" , new Double( 20 ) );   
-	      dataset.setValue( "MotoG" , new Double( 40 ) );    
-	      dataset.setValue( "Nokia Lumia" , new Double( 10 ) );  
-	      return dataset;         
-	   }
-	
-	 static JFreeChart createChart5Places( PieDataset dataset ) {
-	      JFreeChart chart = ChartFactory.createPieChart(      
-	         "Mobile Sales",   // chart title 
-	         dataset,          // data    
-	         true,             // include legend   
-	         true, 
-	         false);
 
-	      return chart;
-	   }
-	   
-	 
-	 
-	 
-	 
-	 public static List<Integer> showProgressOfTourism() throws SQLException{
-		 PreparedStatement stm = null;
-		 ResultSet rs = null;
-		 String maxMunicipality = null;
-		 List<Integer> list = null;
-			
-		 String sql = "SELECT firstYear, secondYear, thirdYear, fourthYear, fithYear, sixthYear, "
-		 		+ "seventhYear, eighthYear, ninthYear, tenthYear, eleventhYear, twelthYear, thirteenthYear, "
-		 		+ "fourteenthYear, fifteenthYear, sixteenthYear FROM tourism WHERE 'municipality' = 'Innsbruck'";
-		
-			
-			try {
-				stm = c.prepareStatement(sql);
-				rs = stm.executeQuery(sql);
-				while(rs.next()) {
-					
-					int firstYear = rs.getInt(1);
-					int secondYear = rs.getInt(2);
-					int thirdYear = rs.getInt(3);
-					int fourthYear = rs.getInt(4);
-					int fifthYear = rs.getInt(5);
-					int sixthYear = rs.getInt(6);
-					int seventhYear = rs.getInt(7);
-					int eighthYear = rs.getInt(8);
-					int ninthYear = rs.getInt(9);
-					int tenthYear = rs.getInt(10);
-					int eleventhYear = rs.getInt(11);
-					int twelthYear = rs.getInt(12);
-					int thirteenthYear = rs.getInt(13);
-					int fourteenthYear = rs.getInt(14);
-					int fifteenthYear = rs.getInt(15);
-					int sixteenthYear = rs.getInt(16);
-					
-					list.add(firstYear);
-					list.add(secondYear);
-					list.add(thirdYear);
-					list.add(fourthYear);
-					list.add(fifthYear);
-					list.add(sixthYear);
-					list.add(seventhYear);
-					list.add(eighthYear);
-					list.add(ninthYear);
-					list.add(tenthYear);
-					list.add(eleventhYear);
-					list.add(twelthYear);
-					list.add(thirteenthYear);
-					list.add(fourteenthYear);
-					list.add(fifteenthYear);
-					list.add(sixteenthYear);
-					
-					
-					for(int i : list) {
-						System.out.println(i);
-					}
-					
-				}		
+
+	private static PieDataset createDataset5Places( ) throws SQLException {
+
+		List<Municipality> list = null;
+		DefaultPieDataset dataset = new DefaultPieDataset( );
+
+		for (Municipality element : fivePlacesWithTheHighestTourism()) {
+			dataset.setValue(element.getMunicipality(), new Double(element.getYearOne()));
+		}
+
+		return dataset;         
+	}
+
+	static void createChart5Places( PieDataset dataset ) {
+		JFreeChart chart = ChartFactory.createPieChart(      
+				"Orte mit dem meisten Wintertourismus",   // chart title 
+				dataset,          // data    
+				true,             // include legend   
+				true, 
+				false);
+
+		ChartPanel chartPanel = new ChartPanel(chart, false);
+		chartPanel.setPreferredSize(new Dimension(1000, 600));
+
+		ApplicationFrame punkteframe = new ApplicationFrame("Tourismus");
+
+		punkteframe.setContentPane(chartPanel);
+		punkteframe.pack();
+		punkteframe.setVisible(true);
+	}
+
+
+
+
+
+	public static void showProgressOfTourism() throws SQLException{
+		PreparedStatement stm = null;
+		ResultSet rs = null;
+
+		String sql = "SELECT `2000`, `2001`, `2002`, `2003`, `2004`, `2005`, "
+				+ "`2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, "
+				+ "`2013`, `2014`, `2015` FROM winterTourism WHERE Gemeinde = 'Innsbruck'";
+
+
+		try {
+			stm = c.prepareStatement(sql);
+			rs = stm.executeQuery(sql);
+			while(rs.next()) {
 				
+				final XYSeries series = new XYSeries("Data");
 				
-			
-				}catch (SQLException e) {
-					e.printStackTrace();
+				for(int i=1; i<17;i++) {
+					series.add(i,rs.getInt(i));
 				}
-				finally {
-					if (stm != null) {
-						stm.close();
-					}
-					if (c != null) {
-						c.close();
-					}
-	 }
-			return list;
-	 }
+				
+				final XYSeriesCollection data = new XYSeriesCollection(series);
+				
+				JFreeChart chart = ChartFactory.createXYLineChart(      
+						"Tourismus",   // chart title
+						"x",
+						"y",
+						data,          // data    
+						PlotOrientation.VERTICAL,
+						true,             // include legend   
+						true, 
+						false);
+				
+				ChartPanel chartPanel = new ChartPanel(chart, false);
+				chartPanel.setPreferredSize(new Dimension(1000, 600));
+
+				ApplicationFrame punkteframe = new ApplicationFrame("Tourismusverlauf in Innsbruck");
+
+				punkteframe.setContentPane(chartPanel);
+				punkteframe.pack();
+				punkteframe.setVisible(true);
+			}		
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
+		finally {
+			if (stm != null) {
+				stm.close();
+			}
+			if (c != null) {
+				c.close();
+			}
+		}
+	}
+	
+	
+	public static void showProgressOfTourismOfCertainPlace(String place) throws SQLException{
+		PreparedStatement stm = null;
+		ResultSet rs = null;
+
+		String sql = "SELECT `2000`, `2001`, `2002`, `2003`, `2004`, `2005`, "
+				+ "`2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, "
+				+ "`2013`, `2014`, `2015` FROM winterTourism WHERE Gemeinde = '?'";
+
+
+		
+		try {
+			stm = c.prepareStatement(sql);
+			rs = stm.executeQuery(sql);
+			while(rs.next()) {
+				
+				final XYSeries series = new XYSeries("Data");
+				
+				for(int i=1; i<17;i++) {
+					series.add(i,rs.getInt(i));
+				}
+				
+				final XYSeriesCollection data = new XYSeriesCollection(series);
+				
+				JFreeChart chart = ChartFactory.createXYLineChart(      
+						"Tourismus",   // chart title
+						"x",
+						"y",
+						data,          // data    
+						PlotOrientation.VERTICAL,
+						true,             // include legend   
+						true, 
+						false);
+				
+				ChartPanel chartPanel = new ChartPanel(chart, false);
+				chartPanel.setPreferredSize(new Dimension(1000, 600));
+
+				ApplicationFrame punkteframe = new ApplicationFrame("Tourismusverlauf in Innsbruck");
+
+				punkteframe.setContentPane(chartPanel);
+				punkteframe.pack();
+				punkteframe.setVisible(true);
+			}		
+		}catch (SQLException e) {
+			e.printStackTrace();
+		}
+		finally {
+			if (stm != null) {
+				stm.close();
+			}
+			if (c != null) {
+				c.close();
+			}
+		}
+	}
 }
 
 
