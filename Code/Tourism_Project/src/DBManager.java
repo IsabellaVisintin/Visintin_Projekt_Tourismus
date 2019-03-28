@@ -41,8 +41,7 @@ public class DBManager {
 
 	public char mainMenu() throws SQLException {
 
-
-		while(true) {
+		while (true) {
 
 			System.out.println("Was wollen Sie tun?");
 			System.out.println("a ... ein Jahr auswählen und den Ort mit dem meisten Wintertourismus erhalten");
@@ -50,25 +49,24 @@ public class DBManager {
 			System.out.println("g ... die fünf Orte mit dem höchsten Tourismus als PieChart erhalten");
 			System.out.println("s ... Den Verlauf des Wintertourismus in Innsbruck ausgeben");
 			System.out.println("l ... Hier können sie den Verlauf des Wintertourismus pro Ort ansehen");
-			
-			
+
 			String answer = sc.next();
-			switch(answer) {
-			case "a": 
+			switch (answer) {
+			case "a":
 				menuYear();
 				break;
-			case "s": 
+			case "s":
 				showProgressOfTourism();
-				break; 
-			case "h": 
+				break;
+			case "h":
 				fivePlacesWithTheHighestTourism();
-				break; 
-			case "g": 
+				break;
+			case "g":
 				createChart5Places(createDataset5Places());
-				break; 
-			case "l": 
+				break;
+			case "l":
 				menuPlace();
-				break; 
+				break;
 			default:
 				System.out.println("Bitte geben Sie einen anderen Buchstaben ein");
 				break;
@@ -81,10 +79,9 @@ public class DBManager {
 
 		String choice = null;
 
-		System.out.println("Falls Sie kein Jahr angeben, "
-				+ "wird der Ort mit dem meisten Tourismus im Jahr 2000 angegeben");
-		System.out.println("Wollen Sie ein Jahr angeben?: [j/n] "
-				+ "oder das Menü verlassen?: [q]");
+		System.out.println(
+				"Falls Sie kein Jahr angeben, " + "wird der Ort mit dem meisten Tourismus im Jahr 2000 angegeben");
+		System.out.println("Wollen Sie ein Jahr angeben?: [j/n] " + "oder das Menü verlassen?: [q]");
 
 		do {
 			choice = sc.nextLine();
@@ -93,27 +90,25 @@ public class DBManager {
 				System.out.println("Bitte ein Jahr eingeben, wo sie den Ort mit dem meisten Tourismus haben wollen");
 				System.out.println("Jahr: ");
 				int year = getInputYear();
-				getPlaceWithMostTourismInACertainYear(year);			
+				getPlaceWithMostTourismInACertainYear(year);
 				break;
 			case "n":
 				System.out.println("Der Ort mit dem meisten Tourismus im Jahr 2000: ");
 				getPlaceWithMostTourismInFirstYear();
 				break;
 			}
-		}while(!choice.equals("q"));
+		} while (!choice.equals("q"));
 
 		return menuYear();
 
 	}
 
-	
 	public String menuPlace() throws SQLException {
 
 		String choice = null;
 
 		System.out.println("Falls Sie keinen Ort angeben, wird der Verlauf für Innsbruck gezeigt");
-		System.out.println("Wollen Sie einen Ort angeben?: [j/n] "
-				+ "oder das Menü verlassen?: [q]");
+		System.out.println("Wollen Sie einen Ort angeben?: [j/n] " + "oder das Menü verlassen?: [q]");
 
 		do {
 			choice = sc.nextLine();
@@ -122,22 +117,21 @@ public class DBManager {
 				System.out.println("Bitte den Ort für den Verlauf angeben:");
 				System.out.println("Ort: ");
 				String place = getInputPlace();
-				showProgressOfTourismOfCertainPlace(place);			
+				showProgressOfTourismOfCertainPlace(place);
 				break;
 			case "n":
 				System.out.println("Der Verlauf von Innsbruck: ");
 				showProgressOfTourism();
 				break;
 			}
-		}while(!choice.equals("q"));
+		} while (!choice.equals("q"));
 
 		return menuYear();
 
 	}
 
-
 	public int getInputYear() {
-		int year = sc.nextInt(); 
+		int year = sc.nextInt();
 
 		return year;
 
@@ -145,10 +139,9 @@ public class DBManager {
 
 	public String getInputPlace() {
 		String place = sc.toString();
-		
+
 		return place;
 	}
-
 
 	public String getPlaceWithMostTourismInACertainYear(int year) throws SQLException {
 
@@ -158,22 +151,19 @@ public class DBManager {
 
 		String sql = "SELECT Gemeinde FROM winterTourism ORDER BY `2000` DESC LIMIT 1;";
 
-
 		try {
 
 			stm = c.prepareStatement(sql);
 			rs = stm.executeQuery();
 
-
-			while(rs.next()) {
+			while (rs.next()) {
 				maxMunicipality = rs.getString("Gemeinde");
-				System.out.println(maxMunicipality);	
-			}		
+				System.out.println(maxMunicipality);
+			}
 
-		}catch (SQLException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
-		}
-		finally {
+		} finally {
 			if (stm != null) {
 				stm.close();
 			}
@@ -181,8 +171,8 @@ public class DBManager {
 
 		return maxMunicipality;
 
-
 	}
+
 	public String getPlaceWithMostTourismInFirstYear() throws SQLException {
 
 		PreparedStatement stm = null;
@@ -191,20 +181,18 @@ public class DBManager {
 
 		String sql = "SELECT Gemeinde FROM winterTourism WHERE `2000` = (SELECT MAX(2000) FROM winterTourism)";
 
-
 		try {
 			stm = c.prepareStatement(sql);
 			rs = stm.executeQuery(sql);
-			while(rs.next()) {
+			while (rs.next()) {
 
 				maxMunicipality = rs.getString("municipality");
-				System.out.println(maxMunicipality);	
-			}		
+				System.out.println(maxMunicipality);
+			}
 
-		}catch (SQLException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
-		}
-		finally {
+		} finally {
 			if (stm != null) {
 				stm.close();
 			}
@@ -216,8 +204,7 @@ public class DBManager {
 		return maxMunicipality;
 	}
 
-
-	public static List<Municipality> fivePlacesWithTheHighestTourism() throws SQLException{
+	public static List<Municipality> fivePlacesWithTheHighestTourism() throws SQLException {
 		PreparedStatement stm = null;
 		ResultSet rs = null;
 
@@ -234,7 +221,7 @@ public class DBManager {
 
 			}
 
-			for(Municipality m : list) {
+			for (Municipality m : list) {
 				System.out.println(m.getMunicipality() + " " + m.getYearOne());
 			}
 
@@ -249,26 +236,23 @@ public class DBManager {
 		return list;
 	}
 
-
-	private static PieDataset createDataset5Places( ) throws SQLException {
+	private static PieDataset createDataset5Places() throws SQLException {
 
 		List<Municipality> list = null;
-		DefaultPieDataset dataset = new DefaultPieDataset( );
+		DefaultPieDataset dataset = new DefaultPieDataset();
 
 		for (Municipality element : fivePlacesWithTheHighestTourism()) {
 			dataset.setValue(element.getMunicipality(), new Double(element.getYearOne()));
 		}
 
-		return dataset;         
+		return dataset;
 	}
 
-	static void createChart5Places( PieDataset dataset ) {
-		JFreeChart chart = ChartFactory.createPieChart(      
-				"Orte mit dem meisten Wintertourismus",   // chart title 
-				dataset,          // data    
-				true,             // include legend   
-				true, 
-				false);
+	static void createChart5Places(PieDataset dataset) {
+		JFreeChart chart = ChartFactory.createPieChart("Orte mit dem meisten Wintertourismus", // chart title
+				dataset, // data
+				true, // include legend
+				true, false);
 
 		ChartPanel chartPanel = new ChartPanel(chart, false);
 		chartPanel.setPreferredSize(new Dimension(1000, 600));
@@ -280,11 +264,7 @@ public class DBManager {
 		punkteframe.setVisible(true);
 	}
 
-
-
-
-
-	public static void showProgressOfTourism() throws SQLException{
+	public static void showProgressOfTourism() throws SQLException {
 		PreparedStatement stm = null;
 		ResultSet rs = null;
 
@@ -292,30 +272,27 @@ public class DBManager {
 				+ "`2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, "
 				+ "`2013`, `2014`, `2015` FROM winterTourism WHERE Gemeinde = 'Innsbruck'";
 
-
 		try {
 			stm = c.prepareStatement(sql);
 			rs = stm.executeQuery(sql);
-			while(rs.next()) {
-				
+			while (rs.next()) {
+
 				final XYSeries series = new XYSeries("Data");
-				
-				for(int i=1; i<17;i++) {
-					series.add(i,rs.getInt(i));
+
+				for (int i = 1; i < 17; i++) {
+					
+						System.out.println("Hallo");
+
+					series.add(i, rs.getInt(i));
 				}
-				
+
 				final XYSeriesCollection data = new XYSeriesCollection(series);
-				
-				JFreeChart chart = ChartFactory.createXYLineChart(      
-						"Tourismus",   // chart title
-						"x",
-						"y",
-						data,          // data    
-						PlotOrientation.VERTICAL,
-						true,             // include legend   
-						true, 
-						false);
-				
+
+				JFreeChart chart = ChartFactory.createXYLineChart("Tourismus", // chart title
+						"x", "y", data, // data
+						PlotOrientation.VERTICAL, true, // include legend
+						true, false);
+
 				ChartPanel chartPanel = new ChartPanel(chart, false);
 				chartPanel.setPreferredSize(new Dimension(1000, 600));
 
@@ -324,11 +301,10 @@ public class DBManager {
 				punkteframe.setContentPane(chartPanel);
 				punkteframe.pack();
 				punkteframe.setVisible(true);
-			}		
-		}catch (SQLException e) {
+			}
+		} catch (SQLException e) {
 			e.printStackTrace();
-		}
-		finally {
+		} finally {
 			if (stm != null) {
 				stm.close();
 			}
@@ -337,9 +313,8 @@ public class DBManager {
 			}
 		}
 	}
-	
-	
-	public static void showProgressOfTourismOfCertainPlace(String place) throws SQLException{
+
+	public static void showProgressOfTourismOfCertainPlace(String place) throws SQLException {
 		PreparedStatement stm = null;
 		ResultSet rs = null;
 
@@ -347,31 +322,24 @@ public class DBManager {
 				+ "`2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, "
 				+ "`2013`, `2014`, `2015` FROM winterTourism WHERE Gemeinde = '?'";
 
-
-		
 		try {
 			stm = c.prepareStatement(sql);
 			rs = stm.executeQuery(sql);
-			while(rs.next()) {
-				
+			while (rs.next()) {
+
 				final XYSeries series = new XYSeries("Data");
-				
-				for(int i=1; i<17;i++) {
-					series.add(i,rs.getInt(i));
+
+				for (int i = 1; i < 17; i++) {
+					series.add(i, rs.getInt(i));
 				}
-				
+
 				final XYSeriesCollection data = new XYSeriesCollection(series);
-				
-				JFreeChart chart = ChartFactory.createXYLineChart(      
-						"Tourismus",   // chart title
-						"x",
-						"y",
-						data,          // data    
-						PlotOrientation.VERTICAL,
-						true,             // include legend   
-						true, 
-						false);
-				
+
+				JFreeChart chart = ChartFactory.createXYLineChart("Tourismus", // chart title
+						"x", "y", data, // data
+						PlotOrientation.VERTICAL, true, // include legend
+						true, false);
+
 				ChartPanel chartPanel = new ChartPanel(chart, false);
 				chartPanel.setPreferredSize(new Dimension(1000, 600));
 
@@ -380,11 +348,10 @@ public class DBManager {
 				punkteframe.setContentPane(chartPanel);
 				punkteframe.pack();
 				punkteframe.setVisible(true);
-			}		
-		}catch (SQLException e) {
+			}
+		} catch (SQLException e) {
 			e.printStackTrace();
-		}
-		finally {
+		} finally {
 			if (stm != null) {
 				stm.close();
 			}
@@ -394,5 +361,3 @@ public class DBManager {
 		}
 	}
 }
-
-
